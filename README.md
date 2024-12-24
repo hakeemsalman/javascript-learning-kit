@@ -16,17 +16,26 @@
 - [Javascript Preparation Topics](#javascript-preparation-topics)
     - [Other cheatsheet or notes links](#other-cheatsheet-or-notes-links)
 - [Topics Wise](#topics-wise)
+  - [Nested functions](#nested-functions)
   - [Lexical Environment](#lexical-environment)
     - [1. Variables](#1-variables)
     - [2. Functions declarations](#2-functions-declarations)
     - [3. Inner and outer Lexical Environment](#3-inner-and-outer-lexical-environment)
     - [4. Returning a function](#4-returning-a-function)
   - [Closure](#closure)
+    - [definition](#definition)
     - [You should know these concepts before moving on Closure.](#you-should-know-these-concepts-before-moving-on-closure)
+    - [Real-life optimizations](#real-life-optimizations)
+- [Useful links](#useful-links)
 
 
 
 # Topics Wise
+
+## Nested functions
+
+
+> NOTE: The nested function's `[[Enviroment]]` is set the moment outer function is called and remains the same no matter from where you call this returned nested function.
 
 ## Lexical Environment
 
@@ -74,8 +83,8 @@
 
 - When a function runs, at the beginning of the call, a new Lexical Environment is created automatically to store local variables and parameters of the call.
 
-> When the code wants to access a variable – the inner Lexical Environment is searched first, then the outer one, then the more outer one and so on until the global one.
-> If a variable is not found anywhere, that’s an error in strict mode (without use strict, an assignment to a non-existing variable creates a new global variable, for compatibility with old code).
+> When the code wants to access a variable - the inner Lexical Environment is searched first, then the outer one, then the more outer one and so on until the global one.
+> If a variable is not found anywhere, that's an error in strict mode (without use strict, an assignment to a non-existing variable creates a new global variable, for compatibility with old code).
 
 ![alt text](/assets/innerouterLexicalscope.png)
 
@@ -84,43 +93,78 @@
 
 ### 4. Returning a function
 
+```js
+function makeCounter() {
+  let count = 0;
+
+  return function() {
+    return count++;
+  };
+}
+
+let counter = makeCounter();
+```
+
+![counter function](/assets/counter-function-one.png)
+
+- All functions remember the Lexical Environment in which they were made. Technically, there’s no magic here: all functions have the hidden property named `[[Environment]]`, that keeps the reference to the Lexical Environment where the function was created:
+
+![counter function two](/assets/counter-function-two.png)
+- So, counter.`[[Environment]]` has the reference to {count: 0} Lexical Environment. That’s how the function remembers where it was created, no matter where it’s called. The `[[Environment]]` reference is set once and forever at function creation time.
+- Later, when counter() is called, a new Lexical Environment is created for the call, and its outer Lexical Environment reference is taken from counter.`[[Environment]]`:
+
+![counter-function-three](/assets/counter-function-three.png)
+
+> A variable is updated in the Lexical Environment where it lives.
 
 
 ## Closure
 
+### definition
+
+- A closure is a function that remembers its outer variables and can access them.
+- In JavaScript, all functions are naturally closures.
+- Lexical Environment:
+  - Every function in JavaScript is created with a hidden `[[Environment]]` property referencing the environment where it was created.
+  - Functions *remember* the variables from their environment due to `this` property.
+- Example of Closure:
+    - ```js
+      function outer() {
+        let name = "JavaScript";
+        return function inner() {
+          console.log(name); // Accesses the outer variable
+        };
+      }
+      const func = outer();
+      func(); // Output: JavaScript
+      ```
+
 ### You should know these concepts before moving on Closure.
 
-- [Lexical Environment]()
+1. [Lexical Environment](#lexical-environment)
 
 <table>
   <tr>
-    <th>
-      Recap
-  </th>
-    </tr>
-  <tr>
   <td>
 
-- `let`: It's mutable variables which have only function/block scope.
-- `const`: It's immutable variable which have only function/block scope.
-- **nested functions**: A function is called “nested” when it is created inside another function.
-  - <details>
-      <summary>SHOW CODE</summary>
 
-      ```js
-      function sayHiBye(firstName, lastName) {
+  - A [closure](https://en.wikipedia.org/wiki/Closure_(computer_programming)) is a function that remembers its outer variables and can access them. In some languages, that’s not possible, or a function should be written in a special way to make it happen. But as explained above, in JavaScript, all functions are naturally closures (there is only one exception, to be covered in The "new Function" syntax).
+  - That is: they automatically remember where they were created using a hidden [[Environment]] property, and then their code can access outer variables.
+  - When on an interview, a frontend developer gets a question about “what’s a closure?”, a valid answer would be a definition of the closure and an explanation that all functions in JavaScript are closures, and maybe a few more words about technical details: the [[Environment]] property and how Lexical Environments work.
 
-        // helper nested function to use below
-        function getFullName() {
-          return firstName + " " + lastName;
-        }
-
-        alert( "Hello, " + getFullName() );
-        alert( "Bye, " + getFullName() );
-      }
-      ```
-    </details>
 
   </td>
   </tr>
 </table>
+
+### Real-life optimizations
+
+- As we've seen, in theory while a function is alive, all outer variables are also retained.
+- But in practice, JavaScript engines try to optimize that. They analyze variable usage and if it’s obvious from the code that an outer variable is not used – it is removed.
+
+
+# Useful links
+
+[requestAnimationFrame test timing](https://event-loop-tests.glitch.me/raf-timing-test.html)
+[while true test ](https://event-loop-tests.glitch.me/while-true-test.html)
+[setTimeout loop test](https://event-loop-tests.glitch.me/setTimeout-loop.html)
